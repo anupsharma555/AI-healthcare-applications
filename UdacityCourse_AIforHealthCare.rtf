@@ -1,0 +1,809 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fswiss\fcharset0 Helvetica-Bold;\f2\fswiss\fcharset0 Helvetica-BoldOblique;
+}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww12280\viewh17720\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b\fs36 \cf0 \ul \ulc0 Udacity: AI for Healthcare Nanodegree (May 2025)\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0\fs24 \cf0 \ulnone \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b\fs28 \cf0 \ul \ulc0 Course 2: Applying AI to 2d Medical Imaging Data\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0\fs24 \cf0 \ulnone \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 Part 1: Introduction to AI for 2D Medical Imaging\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 In this project, you will\
+1. Distill data that are useful for training algorithms to detect pneumonia from a giant set of chest x-ray images taken from actual patients.\
+2. Build a CNN model to detect the presence or absence of pneumonia.\
+3. Build wrappers that read medical images from their real-world clinical formats (DICOM). 4. Write up a documentation & validation plan of your algorithm for FDA 510(k) submission.\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 Part 2: Clinical Foundations of 2D Medical Imaging\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 Exercise: 2D imaging algorithm: \
+Though this is not typically thought of as 2D imaging one could consider EEG readings as a potential 2-D image that could be integrated into an algorithm as part of medical imaging. For example, one could envision a 2-D image from EEG that could classify whether a patient has generalized anxiety disorder, or is normal. This algorithm could be integrated as part of a workflow in an outpatient setting, where patients are being diagnosed, perhaps in a mood disorder or anxiety disorder clinic. The FDA would likely classify the algorithm as similar to others and probably class one since the algorithm itself would be what is being implemented. The EEG is already a known medical device that has been approved and this algorithm would simply take the EEG to the image and classify patients as either having generalized anxiety disorder or not.\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 Part 3: 2D Medical Imaging Exploratory Data Analysis\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 \
+DICOM: Digital Imaging and Communications in Medicine \
+- acquisition method, images, patient information are also contained in the DICOM file\
+- the acquisition info, imaging data, and patient information (from tech) is compiled into final DICOM file. \
+- DICOM was developed in 1993 by Radiology for the purposes of interoperability at multiple hospitals\
+- One of the most successful implementations of an interoperable standard in healthcare. \
+\
+DICOM: series & studies\
+- single 2D series (i.e. single X-ray)\
+- collection of 2D series (i.e. multiple X-rays)\
+- together is considered a DICOM study \
+- DICOM header: Patient, Study, Series, Equipment \
+- components of DICOM file: header (attributes except pixel data: such as patient demographics, Study Date/Time, Referring physician, Series UID, Number, Equipment, Image Number/Type, Acquisition attributes, Position attributes, Resolution), image (pixel data) is not part of DICOM header but is in the DICOM file. \
+- Patient Health Information (PHI) any ID info, demographics, insurance info, also image file can be identifiable and is considered PHI\
+- Clinical Data: not part of DICOM (they are in the EMR) \
+- Radiologist report: included in PACS/EHR, but not part of DICOM; includes location, physician, radiologist, examination, findings, impression \
+ \
+File Types: XML, JSON, CSV, DICOM (Pydicom)\
+- multiple libraries to work with DICOM, but in python can use pydicom package \
+\
+DICOM header: what to include in Machine Learning algorithms (pre-screening stage)\
+- patient ID (do not want same patient in training/testing sets)\
+- patient sex (equal M/F in training/testing)\
+- patient age (equal age in both sets)\
+- do not want to repeat over-training on same study/series \
+- can use dicom header: ex: screen patient age, screen study for particular image type (ex: one series has the proper body part),  \
+\
+Summary: Reach DICOM, inspect images from DICOM series, inspect header data from single DICOM files\
+\
+Exploring Population MetaData\
+- data scientist needs to select relevant subsets of data\
+- need to merge with patient history \
+- need image labels (diagnostic labels from radiologist reports or label with radiologist) \
+- Histograms for single variable distribution (ex: age distribution for patient\'92s with a particular illness)\
+- Scatterplots: relationship between two variables (Pearson Correlation Coefficient) \
+- Co-Occurence Matrix: Heart disease & Obesity (higher value indicates two diseases more likely to co-occur together). \
+\
+Lesson Conclusion: \
+DICOM standard, Patient study & series, DICOM attributes and image components\
+Image attributes (read & extract via pydicom)\
+Prepare non-image data from DICOM header \
+Explore Metadata from Populations (Data features for training including histograms, scatterplots, co-occurence matrices can be inputs in machine learning algorithms).\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 Part 4: Classification of 2D Medical Images\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 - In this lesson, will focus on deep learning (CNN architecture for classification), pre-process data, train/test for different clinical applications \
+- Outline: types of models, dataset splitting, gold standards (label), image pre-processing for deep learning, CNN Fine tuning for medical tasks, model evaluation (classification)\
+\
+- CNN for clinical use (vs. basic images for labeling) \
+- Deep Learning for Medicine: develop intuition for build, train, fine-tune for medical classification tasks \
+- Machine Learning: Segmentation: (outlines around specific findings), Localization (id region and draws bounding box), Classification \
+- Prior to Deep Learning: researchers had to predefined features in images important for segmentation, localization, classification\
+- Classic Machine Learning: this was considered an art, and took a significant amount of researchers time, would require expert input, features were defined and then provided to an algo (ex: Support Vector Machines, Logistic regression) to determine how these features differentiate between classes of images. \
+- Example Otsu\'92s method as classic machine learning example. Finds the intensity threshold within images to minimize variance between classes (i.e. foreground vs. background). This is used for segmentation of breast and background. Can extend Otsu\'92s method for classification (ex: healthy vs. diseased lung tissue). \
+- Deep Learning: start with algo architecture (do not need to select features), here the deep learning algo would discover features by looking at many images, and seeing what made certain images different from each other, also returns an output on whether a specific finding is present in an image (i.e. classification). \
+- Convolutional neural network: architecture was designed to mirror human visual cortex in brain. Cells in V1 (receptive), V2 (larger receptive field), V4, IT. Higher level layers can detect more complex pictures. Each layer is downsampled to see larger field. \
+-UNET for 3D segmentation \
+\
+- Splitting your dataset: training vs. validation, medical imaging algo need to curate and organize data,\
+- split data to training (learn the features for classes), and validation set (user will use to determine whether algo classifies and performance); generally data should be split 80% of positive cases (training) and 20% of positive cases (validation). No image should be used for both datasets. \
+- Training set: balanced for positive/negative cases, distributed for demographics (same distribution as overall dataset), real-world sets do not include balanced cases, rather real-world balance used. \
+- Splitting example: 100 cases, 30% pos/ 70% neg. Then split by 80:20 on positive cases for training/validation. Training set is not balanced for positive/negative. 
+\f1\b Next step is to discard negative cases so that there are even number of pos/neg cases. 
+\f0\b0 Keras libraries (train_test_split) with test_size = 0.2, stratify by positive cases. However, validation set can be imbalanced to reflect the real-world situation where negative cases would be more prevalent. \
+\
+- Gold standard labeling: detects disease with highest sensitivity and specificity (accuracy). In pneumonia, the gold standard is biopsy, thus will rely on radiologist for labeling as pathology will take time. In mammography, the gold standard is radiologist read, but if mass is found need biopsy to determine if malignant / benign. \
+- Gold standard is often times unattainable for algo developer, only get a large set of DICOM images. Thus, a lot of information is not available (radiologist report, biopsy/ digital pathology). Thus, need to establish a ground truth that is close to the gold standard. \
+- Ground truth: set of labels that determine which class (ex: biopsy based labeling, NLP-extracted labels from radiologist reports, one or more radiologist interpretation, output of state-of-the-art algorithm). Challenges: biopsy data is expensive / hard to get, NLP can have inaccuracies, limited dataset (ex: only x-rays without labels, need to hire radiologist to go through each image and label them). \
+- Silver standard (hire several radiologists to provide diagnosis of image, final diagnosis is determined by a voting system including experiences as part of a voting system). This is alternative way to arrive at Ground Truth. \
+\
+Image Pre-processing for Model Training\
+- Goals: remove image noise (e.g. background extraction), enforce some normalization across images (zero-mean, standardization), enlarge your dataset (image augmentation), resize for your CNN architecture\'92s required input. \
+- Intensity normalization: first remove background pixels (Otsu\'92s method), then for convolutional neural network architecture perform standardize a normalization by subtracting the mean intensity value and divide by standard deviation. This will result in mean centering around zero and limit range of intensity values to ensure that CNN filters weights do not reach infinity. \
+- Image augmentation: create different versions of original images to add heterogenous examples to try to mimic real-world variation. *Keras* provides a package called \'93ImageDataGenerator\'94 for image augmentation (added images). Example parameters: horizontal flip (set to true), height_shift_range, width_shift_range (body shapes), rotation_range (images that are not fully aligned), shear_range (how much to pull images), zoom_range (how much to zoom in parts of image). Need to consider these variables within limits. [**Goal of image augmentation is to give neural network more examples of what images could look like in real world, thus not all types of augmentation are appropriate, example is vertical_flip which is not reflective of real world scenario]. **Validation Data should never be augmented. Just like we didn\'92t create an artificial balance of positive and negative cases in our validation set, we should never augment as want it reflect real world. Validation data should still be normalized so that intensity values are close to zero, but other than that do not want to modify images. \
+\
+Fine-tuning CNNs for 2D medical image classification \
+- start with pre-trained models (faster)\
+- CNN: 224 x 224 x 3 -> gets downsampled to different sizes via \'93max pooling\'94 \
+- Re-use CNN architecture: first set of layers can be re-used or frozen, if the properties are general, later or downstream layers can be fine-tuned on a different data set with similar goals to allow saving time / energy for novel models\
+- Ex: Fine-tuning a pre-trained VGG16 model to detect tumors in 2D chest x-rays \
+- One of the key pieces of fine-tuning is the last layer. We need to adjust the dimension of the last layer to match our specific use cases. We can also add new layers to train from scratch.\
+\
+Evaluating the Model\
+- monitor performance of model on testing and training test\
+- each time entire training data passes through CNN (called Epoch 1)\
+- at end of each Epoch, CNN has a loss function to determine how different its prediction is from ground truth from training images (training loss). \
+- Network then uses training loss to update weights of every single filter of each layer that is being trained; to make weights more accurate in next epoch via back propagation \
+- Need to monitor loss over time to see how much to train \
+- Also use loss function (validation loss) to see how prediction matches validation classification (we do not update weights at this stage), not teaching how to be a better model; thus do not update weights via back propagation. \
+- Training Loss and Validation Loss at end of each epoch \
+- Goal: want to see slowly decreasing loss function for both training and validation samples. Here can save weights when loss function is more stable \
+- Evaluating epoch after epoch: Use function from \'93keras" package called fit.generator to obtain loss values after each epoch to plot and determine at which step to freeze weights\
+- To avoid overfitting (where validation loss stops decreasing after a few epochs), one can change some of the parameters such as \'93batch size\'94, \'93learning rate\'94, \'93dropout\'94 and add \'93more variation to the training data.\'94 \
+\
+Summary: Types of Models, Dataset Splitting, Gold Standards, Image Pre-processing, CNN layers and filters and Fine Tuning, Model Evaluation \
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 Section 5: Translating AI Algorithms for Clinical Settings with the FDA \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 - FDA regulatory process (intended use) -> Algo limitations -> Performance Statistics (for device) -> FDA validation plan\
+- Even best CNN with great performance on benchmark datasets still will need to fit real-world clinical settings to help clinicians treat real patients with real diseases \
+- need to understand the nuances of the FDA 510(k) process (take several multi-day courses) \
+- FDA:\ul  intended use statement\ulnone  (tells FDA exactly what algorithm is used, ex: ID if cancer is malignant or begin, will be used by FDA to define risk/class of algo). \ul Indications for use statement\ulnone : how algo *could* be used\
+- Medical device\
+- Class I low risk (Exempt, 501k): 47% of approved devices on market (minimal contact with patients and low impact on health of patient)\
+- Class II medium risk (501k, Exempt): general controls are insufficient to provide a reasonable assurance of the safety and effectiveness of device; needs to show that device is substantially equivalent to predicate device (similar use/design/standards/etc). Most AI for medical imaging algo end up going through Class II medical device evaluations (i.e. diagnostic tools)\
+- Class III high risk (PMA, 501k): only 10% of devices (ex: permanent implants, life support systems, permanent implants). A device that may have initially been put into class II may be bumped up to class III if the manufacturer cannot demonstrate substantial equivalence to a predicate during the FDA process. \
+- Intended Use statement should be tied to risk and class (ex: scalpel could be Class I or Class III based on this statement)\
+- If algo is Class III may need PMA (premarket approval) which takes much longer unless can make case for predicate device (i.e. 501K process instead) \
+- CADx (computer-assisted diagnosis) has recently been classified by FDA as Class 2. However, without a predicate device, algorithm would still have to go through PMA pathway. \
+- \ul Indications for Use:\ulnone  precise situations and reasons where and why you would use this device. This statement can be \'93indicated for use in screening mammography studies, for ages between 20-59 age range, without prior history of breast cancer, etc). \
+\
+Medical Device Reporting:\
+- After algo is cleared by the FDA and released out into the clinical world, the FDA has a system called medical device reporting to continuously monitor whether or not your algorithm is malfunctioning in the world. Anytime one of the end-users discovers a malfunction in the software, they report back to the manufacturer (i.e. industry/academia) and the manufacturer is required to report it back to the FDA. FDA can recall device or update labeling to acknowledge limitations.\
+\
+Computational Limitations \
+- ex: CNN for brain bleeds -> indications for use: to help prioritize radiologist workflow (i.e. assist radiologist)\
+- indications for use: workflow reprioritization in emergency settings\
+- requirement: run fast; computational limitations include GPU/cloud usage (does not achieve fast performance without this type of infrastructure)\
+- Choosing a narrow scope with device is a good strategy especially if can maximize market impact (i.e. marketable algorithm) \
+- Can always expand your devices functionally over time and work with the FDA to get novel expansions approved. \
+\
+Translating Performance into Clinical Utility \
+- accuracy data for algorithm is not sufficient as disease labels are low probability \
+- negative cases can be assessed with specificity (TN/ (TN + FP)), proportion of accurately-identified negative cases \
+- specificity will be high even if algo says all negative cases are negative \
+- sensitivity is more frequently used a clinical performance metric: TP / (TP + FN), proportion of accurately-identified positive cases \
+- specificity ignores true positives and sensitivity does not account for false positives. \
+- precision: tp / (tp + fp) [positive predicted value]: high precision test gives more confidence that positive test is actually positive; could still miss positive cases \
+- recall: allow us to confidently rule out disease; gives confidence that negative test is truly negative \
+- optimizing one metric comes at expense of the other (there is a balance) \
+\
+Performance Trade-offs\
+- varying classification threshold is example of where tradeoff in diagnostic properties would be present \
+- output of CNN is not usually 0 or 1 but is a threshold score (probability between 0 to 1)\
+- recall and precision values will vary when different threshold values used; can generate a precision-recall curve \
+- visualize a curve\
+- for binary classification problems, there\'92s a score called the F1 score which combines both precision and recall and allows us to better measure a test accuracy when there are class imbalances. Harmonic mean of precision and recall. This can be a single score or metric. \
+\
+Designing an FDA validation plan \
+- FDA validation dataset, then ground truth labels (radiologist or group), performance standard from literature, run algo on data to meet performance standard, then submit to FDA. \
+\
+Final Exercise: \
+- need validation dataset that is screening mammography between ages 40-80\
+- for Algo A: no implants, distribution of densities reflects real world, silver standard approach using mixture of radiologists\
+- for Algo B: no prior hx of breast cancer, single radiologist label as they are really accurate at this task. \
+- Summary: FDA risk categories, algo limitations using medical device reporting, precision/recall tradeoff, validation plan for FDA\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 Final Project (Detecting Pneumonia Detection from Chest X-rays)\
+\
+Pneumonia Detection from Chest X-Rays\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 Project Overview\
+In this project, you will apply the skills that you have acquired in this 2D medical imaging course to analyze data from the \ul NIH Chest X-ray Dataset and train a CNN to classify a given chest x-ray for the presence or absence of pneumonia.\ulnone  This project will culminate in a model that can \ul predict the presence of pneumonia with human radiologist-level accuracy that can be prepared for submission to the FDA for 510(k) clearance as software as a medical device\ulnone . \ul As part of the submission preparation, you will formally describe your model, the data that it was trained on, and a validation plan that meets FDA needs.\ulnone \
+\
+You will be provided with the medical images with clinical labels for each image that were extracted from their accompanying radiology reports.\
+\
+The project will include access to a \ul GPU for fast training of deep learning architecture, as well as access to 112,000 chest x-rays with disease labels acquired from 30,000 patients.\ulnone \
+\
+Pneumonia and X-Rays in the World\
+Chest X-ray exams are one of the most frequent and cost-effective types of medical imaging examinations. Deriving clinical diagnoses from chest X-rays can be challenging, however, even by skilled radiologists.\
+\
+When it comes to pneumonia, \ul chest X-rays are the best available method for diagnosis.\ulnone  More than 1 million adults are hospitalized with pneumonia and around 50,000 die from the disease every year in the US alone. The high prevalence of pneumonia makes it a good candidate for the development of a deep learning application for two reasons: 1) Data availability in a high enough quantity for training deep learning models for image classification 2) Opportunity for clinical aid by providing higher accuracy image reads of a difficult-to-diagnose disease and/or reduce clinical burnout by performing automated reads of very common scans.\
+\
+The diagnosis of pneumonia from chest X-rays is difficult for several reasons:\
+\
+The appearance of pneumonia in a chest X-ray can be very vague depending on the stage of the infection\
+Pneumonia often overlaps with other diagnoses\
+Pneumonia can mimic benign abnormalities\
+For these reasons, common methods of diagnostic validation performed in the clinical setting are to obtain sputum cultures to test for the presence of bacteria or viral bodies that cause pneumonia, reading the patient's clinical history and taking their demographic profile into account, and comparing a current image to prior chest X-rays for the same patient if they are available.\
+\
+About the Dataset\
+The dataset provided to you for this project was curated by the NIH specifically to address the problem of a lack of large x-ray datasets with ground truth labels to be used in the creation of disease detection algorithms.\
+\
+The data is mounted in the Udacity Jupyter GPU workspace provided to you, along with code to load the data. Alternatively, you can download the data from the kaggle website or official NIH website and run it locally. \ul You are STRONGLY recommended to complete the project using the Udacity workspace since the data is huge, and you will need GPU to accelerate the training process.\ulnone \
+\
+There are \ul 112,120 X-ray images with disease labels from 30,805 unique patients in this dataset.\ulnone  \ul The disease labels were created using Natural Language Processing (NLP) to mine the associated radiological reports.\ulnone  \ul The labels include 14 common thoracic pathologies:\ulnone \
+\
+Atelectasis\
+Consolidation\
+Infiltration\
+Pneumothorax\
+Edema\
+Emphysema\
+Fibrosis\
+Effusion\
+Pneumonia\
+Pleural thickening\
+Cardiomegaly\
+Nodule\
+Mass\
+Hernia\
+The biggest limitation of this dataset is that image labels were NLP-extracted so there could be some erroneous labels but the NLP labeling accuracy is estimated to be >90%.\
+\
+The original radiology reports are not publicly available but you can find more details on the labeling process here.\
+\
+Dataset Contents:\
+112,120 frontal-view chest X-ray PNG images in 1024*1024 resolution (under images folder)\
+Meta data for all images (Data_Entry_2017.csv): Image Index, Finding Labels, Follow-up #, Patient ID, Patient Age, Patient Gender, View Position, Original Image Size and Original Image Pixel Spacing.\
+\
+Project Steps\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 1. Exploratory Data Analysis (completed)\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 The first part of this project will involve exploratory data analysis (EDA) to understand and describe the content and nature of the data.\
+\
+Note that much of the work performed during your EDA will enable the completion of the final component of this project which is focused on documentation of your algorithm for the FDA. This is described in a later section, but some important things to focus on during your EDA may be:\
+\
+The patient demographic data such as gender, age, patient position,etc. (as it is available)\
+The x-ray views taken (i.e. view position)\
+The number of cases including:\
+number of pneumonia cases,\
+number of non-pneumonia cases\
+The distribution of other diseases that are comorbid with pneumonia\
+Number of disease per patient\
+Pixel-level assessments of the imaging data for healthy & disease states of interest (e.g. histograms of intensity values) and compare distributions across diseases.\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 2. Building and Training Your Model  \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 Training and validating Datasets\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ul From your findings in the EDA component of this project, curate the appropriate training and validation sets for classifying pneumonia. Be sure to take the following into consideration:\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ulnone \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ul Distribution of diseases other than pneumonia that are present in both datasets\
+Demographic information, image view positions, and number of images per patient in each set\
+Distribution of pneumonia-positive and pneumonia-negative cases in each dataset\
+Model Architecture\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ulnone \
+In this project, you will fine-tune an existing CNN architecture to classify x-rays images for the presence of pneumonia. There is no required architecture required for this project, \ul but a reasonable choice would be using the VGG16 architecture with weights trained on the ImageNet dataset. Fine-tuning can be performed by freezing your chosen pre-built network and adding several new layers to the end to train, or by doing this in combination with selectively freezing and training some layers of the pre-trained network.\ulnone \
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 Image Pre-Processing and Augmentation\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 \
+You may choose or need to do some amount of preprocessing prior to feeding imagees into your network for training and validating. This may serve the purpose of conforming to your model's architecture and/or for the purposes of augmenting your training dataset for increasing your model performance. When performing image augmentation, be sure to think about augmentation parameters that reflect real-world differences that may be seen in chest X-rays.\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 Training\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 \
+In training your model, there are many parameters that can be tweaked to improve performance including:\
+\
+Image augmentation parameters\
+Training batch size\
+Training learning rate\
+Inclusion and parameters of specific layers in your model\
+You will be asked to provide descriptions of the methods by which given parameters were chosen in the final FDA documentation.\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 Performance Assessment\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 \
+As you train your model, you will monitor its performance over subsequence training epochs. Choose the appropriate metrics upon which to monitor performance. Note that 'accuracy' may not be the most appropriate statistic in this case, depending on the balance or imbalance of your validation dataset, and also depending on the clinical context that you want to use this model in (i.e. can you sacrafice high false positive rate for a low false negative rate?)\
+\
+Note that detecting pneumonia is hard even for trained expert radiologists, so you should not expect to acheive sky-high performance. This paper describes some human-reader-level F1 scores for detecting pneumonia, and can be used as a reference point for how well your model could perform.\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 3. Clinical Workflow Integration\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 The imaging data provided to you for training your model was transformed from DICOM format into .png to help aid in the image pre-processing and model training steps of this project. In the real world, however, the pixel-level imaging data are contained inside of standard DICOM files.\
+\
+For this project, create a DICOM wrapper that takes in a standard DICOM file and outputs data in the format accepted by your model. Be sure to include several checks in your wrapper for the following:\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ul Proper image acquisition type (i.e. X-ray)\
+Proper image acquisition orientation (i.e. those present in your training data)\
+Proper body part in acquisition\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 \ulnone 4. FDA Submission\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 For this project, you will complete the following steps that are derived from the FDA's official guidance on both the algorithm description and the algorithm performance assessment. Much of this portion of the project relies on what you did during your EDA, model building, and model training. Use figures and statistics from those earlier parts in completing the following documentation.\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ul 1. General Information:\ulnone \
+First, provide an Intended Use statement for your model\
+Then, provide some indications for use that should include:\
+Target population\
+When your device could be utilized within a clinical workflow\
+Device limitations, including diseases/conditions/abnormalities for which the device has been found ineffective and should not be used\
+Explain how a false positive or false negative might impact a patient\ul \
+2. Algorithm Design and Function\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ulnone \
+In this section, describe your fully trained algorithm and the DICOM header checks that you have built around it. Include a flowchart that describes the following:\
+\
+Any pre-algorithm checks you perform on your DICOM\
+Any preprocessing steps performed by your algorithm on the original images (e.g. normalization)\
+Note that this section should not include augmentation\
+The architecture of the classifier\
+For each stage of your algorithm, briefly describe the design and function.\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ul 3. Algorithm Training\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ulnone \
+Describe the following parameters of your algorithm and how they were chosen:\
+\
+Types of augmentation used during training\
+Batch size\
+Optimizer learning rate\
+Layers of pre-existing architecture that were frozen\
+Layers of pre-existing architecture that were fine-tuned\
+Layers added to pre-existing architecture\
+Also describe the behavior of the following throughout training (use visuals to show):\
+\
+Training loss\
+Validation loss\
+Describe the algorithm's final performance after training was complete by showing a precision-recall curve on your validation set.\
+\
+Finally, report the threshold for classification that you chose and the corresponded F1 score, recall, and precision. Give one or two sentences of explanation for why you chose this threshold value.\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ul 4. Databases\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ulnone \
+For the database of patient data used, provide specific information about the training and validation datasets that you curated separately, including:\
+\
+Size of the dataset\
+The number of positive cases and the its radio to the number of negative cases\
+The patient demographic data (as it is available)\
+The radiologic techniques used and views taken\
+The co-occurrence frequencies of pneumonia with other diseases and findings\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ul 5. Ground Truth\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ulnone \
+The methodology used to establish the ground truth can impact reported performance. Describe how the NIH created the ground truth for the data that was provided to you for this project. Describe the benefits and limitations of this type of ground truth.\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ul 6. FDA Validation Plan\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ulnone \
+You will simply describe how a FDA Validation Plan would be conducted for your algorithm, rather than actually performing the assessment. Describe the following:\
+\
+The patient population that you would request imaging data from from your clinical partner. Make sure to include:\
+\
+Age ranges\
+Sex\
+Type of imaging modality\
+Body part imaged\
+Prevalence of disease of interest\
+Any other diseases that should be included or excluded as comorbidities in the population\
+Provide a short explanation of how you would obtain an optimal ground truth\
+\
+Provide a performance standard that you choose based on this paper: Link: https://arxiv.org/pdf/1711.05225
+\f1\b \
+\
+________________________________________________________________________\
+\
+
+\f0\b0 Project Overview\
+In this project, you will apply the skills that you have acquired in this 2D medical imaging course to analyze data from the NIH Chest X-ray Dataset and train a CNN to classify a given chest x-ray for the presence or absence of pneumonia. This project will culminate in a model that can predict the presence of pneumonia with human radiologist-level accuracy that can be prepared for submission to the FDA for 510(k) clearance as software as a medical device. As part of the submission preparation, you will formally describe your model, the data that it was trained on, and a validation plan that meets FDA criteria.\
+\
+You will be provided with the medical images with clinical labels for each image that were extracted from their accompanying radiology reports.\
+\
+The project will include access to a GPU for fast training of deep learning architecture, as well as access to 112,000 chest x-rays with disease labels acquired from 30,000 patients.\
+\
+Project Highlight\
+This project is designed to give you hands-on experience with 2D medical imaging data analysis and preparation of a medical imaging model for regulatory approval.\
+\
+Upon completion of this project, you would be able to:\
+\
+- recommend appropriate imaging modalities for common clinical applications of 2D medical imaging\
+- perform exploratory data analysis (EDA) on medical imaging data to inform model training and explain model performance\
+- establish the appropriate \'91ground truth\'92 methodologies for training algorithms to label medical images\
+- extract images from a DICOM dataset\
+- train common CNN architectures to classify 2D medical images\
+- translate outputs of medical imaging models for use by a clinician\
+- plan necessary validations to prepare a medical imaging model for regulatory approval\
+\
+Project Steps\
+This project has the following steps.\
+1. Exploratory Data Analysis\
+2. Building and Training Your Model\
+3. Clinical Workflow Integration\
+4. FDA Preparation\
+\
+For this project, you will work in the Jupyter GPU workspace provided for you. You can also find the notebooks containing the necessary starter code in the workspace.\
+\
+You may also download all of the files for the project directly from this repo(opens in a new tab). This workspace contains:\
+\
+EDA.ipynb: This is the file you will be performing the EDA.\
+Build and train model.ipynb: This is the file you will be building and training your model.\
+Inference.ipynb: This is the file you will be performing clinical workflow integration.\
+.dcm files: They are the test files to test the clinical workflow integration.\
+sample_labels.csv: This is the file that should be used to assess images in the pixel-level.\
+FDA_Submission_Template.md: This is the template for you to create the FDA submission. Please copy the template into your choice of editor. Finish the documentation, save it as a .pdf file, and upload.\
+Note: The NIH data for EDA and training is mounted in the Udacity Jupyter GPU workspace provided to you along with the code to load the data. Alternatively, you can download the data from the kaggle website(opens in a new tab) and run it locally. You are STRONGLY recommended to complete the project using the Udacity workspace since the data is huge, and you will need GPU to accelerate the training process.\
+\
+Detailed instruction for this project is provided in this README(opens in a new tab) file.\
+\
+Evaluation\
+Your project will be reviewed by a Udacity reviewer against the project rubric(opens in a new tab). Be sure to review this rubric thoroughly and self-evaluate your project before submission. All criteria found in the rubric must be meeting specifications for you to pass.\
+\
+Submission Files\
+Following files would be needed for evaluation:\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 EDA.ipynb notebook file 
+\f0\b0 with all questions answered and all code cells executed and displaying output.\
+
+\f1\b Build and train model.ipynb notebook file
+\f0\b0  with all questions answered and all code cells executed and displaying output.\
+
+\f1\b A .h5 or .json file
+\f0\b0  contains your final model architecture.\
+
+\f1\b A .h5 or .json file
+\f0\b0  contains your final model weights.\
+
+\f1\b Inference.ipynb notebook file 
+\f0\b0 with all questions answered and all code cells executed and displaying output.\
+
+\f1\b FDA_submission.pdf file
+\f0\b0  with a report that describes the algorithm and performance.\
+
+\f1\b Please upload the FDA_submission.pdf to the workspace and submit your project through the workspace.
+\f0\b0 \
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b\fs28 \cf0 Course 3: AI to 3D Medical Imaging \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 Part 1: Introduction\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ul Course objectives:
+\fs24 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\fs28 \cf0 \ulnone - Understand what 3D medical images are, who uses them, and for what purposes\
+- Perform exploratory data analysis on 3D image datasets in common formats such as DICOM and NIFTI\
+- Apply popular machine learning algorithms for both classification and segmentation tasks using real-world medical imaging datasets\
+- Learn to integrate trained models into a clinical imaging environment and troubleshoot your deployments\
+- Provide input into the algorithm validation process as required for field deployments\
+\
+AI: term definition: \
+\'93An attempt will be made to find how to make machines use language, form abstractions and concepts, solve kinds of problems now reserved for humans, and improve themselves. \'85 For the present purpose the artificial intelligence problem is taken to be that of making a machine behave in ways that would be called intelligent if a human were so behaving.\'94\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f2\i\b \cf0 McCarthy, Shannon, Minsky et al. A proposal for the Dartmouth summer research project on artificial intelligence, 1955
+\f0\i0\b0 \
+\
+AI engineers are like full-stack engineers that need to think about all aspects of workflow from the data, front-end usage and back-end implementation. Machine learning is considered a subpart of AI that is data-focused on improving algorithms that do not need to be hard-coded, but can evolve with the data that is provided. \
+\
+FDA algo approvals since 2016. 100+ radiology startups for AI algorithms. \
+Stakeholders for AI for medical imaging: hospitals/medical centers, startups, large medical software vendors \
+\
+Tools for the course: \
+- Machine learning tools: Python 3.7/Jupyter, PyTorch 1.3, Numpy 1.18\
+- Imaging tools: Viewers: Microdicom, Radiant, 3D slicer\
+- Clinical network simulation/debugging: Orthanc, OHIF, DCMTK\
+\
+Packages for local implementation: PyTorch (with CUDA), nibble, matplotlib, bumpy, Pillow, tensor board, 3D Slicer, DMCTK tools \
+\
+
+\f1\b Part 2: Medical Imaging\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 - 3D imaging tasks: multi-planar reconstruction, 3D reconstruction, windowing, registration \
+\
+Lesson Summary\
+In this lesson, we will have Mazen share his perspective on the following:\
+\'95 What are 3D medical images?\
+\'95 Who uses 3D medical images?\
+\'95 Why are they being used?\
+\'95 Some example clinical scenarios\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ul After that, we will have you perform an exercise on picking a suitable problem for an Al project by tapping into publicly available medical resources.\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ulnone Then, we will go into some technical details and cover:\
+\'95 Physical principles of CT scanners and then perform an exercise on computing a sinogram\
+\'95 Physical principles of MR scanners\
+\'95 Cover basic 3D imaging tasks:\
+\'95 Multi-planar reconstruction\
+\'95 3D reconstruction\
+\'95 Windowing\
+\'95 Registration\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ul We will finish the lesson by having you perform an exercise where you will write code to do a 3D reconstruction of a 3D medical volume.\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ulnone \
+Why 3D medical images:\
+- better at answering \'93IS\'94 there a finding, better localization in 3D spaces, what tissue types\
+- parameters: contrast resolution, spatial resolution, invasiveness, radiation dose, cost\
+\
+Contrast Resolution: differences in image intensity \
+- each imaging modality has its own intrinsic contrast resolution, which can be adjusted by tweaking certain imaging parameters prior to image acquisition. (Only intrinsic parameters)\
+- contrast agent/media can also be introduced to improve resolution. CT: iodine-based agents, MRI: gadolinium-based agents. \
+- following IV administration, these agents follow circulatory system, first returning to the heart, pumped through the arteries, delivered to the organs, returned to the veins, and eventually excreted through the urinary system and hepatobiliary system. \
+- Above cycle can be used to capture images at different time points to highlight different anatomical structures. Ex: CT of abdominal can take pictures prior to contrast injection, 20 seconds later when the artery stand out most, 75 seconds later when the liver and venous system are highlighted, finally a delayed time point which can be useful for diagnosing some diseases. \
+- ask whether images are non-contrast, or post-contrast, and if a contrast agent was administered which phase the patient was imaged in. \
+\
+Spatial Resolution: differences between small objects \
+- CT-Face vs. CT-Temporal Bone (have different spatial resolution for middle ear)\
+- spatial resolution refers to what the parameters and FOV will be and how it will affect ability to resolve different anatomical structures \
+\
+Application:\
+- diagnosis made clinically or based on history, can be further informed using imaging studies to refine the diagnosis, more precisely estimate the severity of disease, and attempt to predict future progression. \
+- Example: Alzheimer\'92s Disease: volumetric MRI with quantification of key brain regions can be used to more precisely estimate the severity of the disease, or identify any additional contributing factors to the patient\'92s memory loss. \
+- Final project will involve the hippocampus and segmenting this structure in the context of AD\
+- Medical imaging can be used to guide therapy, ex: radiation therapy where CT/MRI can be used to contour regions of interests, planning the distribution and quantity of radiation with higher precision. \
+\
+Bayesian Theorem: describes the probability of an event based on prior knowledge of conditions that might be related to the event. Expressed in terms of odds in medicine. \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ul Prior Odds x Likelihood Ratio = Posterior Odds \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ulnone Prior Odds: refers to odds prior to diagnostic test in question (i.e. local population prevalence)\
+Likelihood Ratio: test diagnosis performance metric that needs to be calculated and ranges from 0 to infinity where 1 means prior odds is unchanged\
+Posterior Odds: belief about a disease after factoring in our diagnostic test. \
+High likelihood ratio would confirm disease by significantly increasing odds, while low likelihood ratio test would exclude disease by significantly decreasing odds. \
+\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 Exercise 1: Choosing a clinical problem and framing it as a machine learning task.
+\f0\b0 \
+In this exercise, you will practice how to choose a clinical problem to tackle, explore how to research some basic facts about the disease, and frame the clinical problem as a machine learning task.\
+\
+Part 1: Choosing a clinical case.\
+Exciting clinical problems abound in the realm of Healthcare AI. To help you narrow down some potential ideas, we will use the American College of Radiology Data Science Institute (ACR DSI) curated list of use cases. Alternatively, you may explore any clinical problem of your choosing without using the database if you already had something in mind. Please note that some use cases in the ACR DSI database can seem overwhelming or obscure without some background medical knowledge. If this is the case, simply choose something that\'92s more intuitive. A few good starting examples include:\
+\
+Acute Appendicitis.\
+Aging Brain \'96 Dementia: {\field{\*\fldinst{HYPERLINK "https://www.acr.org/Data-Science-and-Informatics/AI-in-Your-Practice/AI-Use-Cases/Use-Cases/Aging-Brain---Dementia"}}{\fldrslt https://www.acr.org/Data-Science-and-Informatics/AI-in-Your-Practice/AI-Use-Cases/Use-Cases/Aging-Brain---Dementia}}\
+\
+Incidental Pulmonary Nodules on CT. Your task for this first part is to choose a case. If you choose to use the ACR DSI database, submit the link that points to your use case. If using any other resources, please submit an image capture or PDF of a medical or AI journal article that explores this problem within the context of machine learning.\
+Part 2: Background research.\
+To deliver an algorithm that performs well in a clinical setting, it can be extremely beneficial to have some rudimentary understanding of the disease or situation you are addressing. To do so, engaging in some background research to build your foundation will be crucial. For this part of the exercise, find a review article from the PubMed database describing the problem. Ask yourself, \'93what is the current gold standard for confirming or ruling out the presence of this disease/state\'94. Understanding the current gold standard/ground truth test will be a critical benchmark when testing any algorithm you develop. Submit a screen capture or PDF of the article to receive credit for this portion.\
+\
+Part 3: Framing the problem as a machine learning task.\
+With some background knowledge of the disease or condition at hand, as well as how it is currently ruled in or out, consider how the task could be framed as a machine learning problem. We will be going over this in much more detail in the respective lesson of this course, but some early exposure will be useful. For example, solving the problem of autonomously detecting one or more lung nodules could be framed as an object detection task. Measuring changes in tumor volume over time may be best framed as a segmentation task. Etc. Submit a short paragraph detailing how you would frame your clinical problem of choice as a machine learning task, and explain your rationale.\
+\
+Below you will find a workspace with a Jupyter Notebook where you can record the answers to each part of this exercise listed above.\
+\
+Example from course instructor: \
+Part 1: Choosing a clinical case.\
+COVID-19 Compatible Chest CT Pattern(opens in a new tab).\
+\
+Part 2: Background research.\
+Focused on Performance of radiologists in differentiating COVID-19 from viral pneumonia on chest CT(opens in a new tab) paper by Bai, H.X., Hsieh, B., et. al. for my background research.\
+\
+Part 3: Framing the problem as a machine learning task.\
+Per the ACR-DSI, the assigned task is to provide a likelihood of a diagnosis compatible with COVID-19 using chest CT data. I believe an initial step in solving this clinical problem, determining whether any abnormal findings are present on a chest CT, would be well-framed as an object detection task. The output would be a bounding box delineating the areas of abnormality that could indicate viral pneumonia. Based on recent literature, such findings could include consolidation, bilateral and peripheral disease, linear opacities, \'93crazy-paving\'94 patterns, and the \'93reverse halo\'94 sign. While these findings are not-specific for COVID-19, their detection could guide the ordering clinician to be more vigilant in follow-up testing for the disease. A negative STAT rapid influenza/RSV PCR tests and positive Real-Time Reverse Transcriptase Polymerase Chain Reaction (rRT-PCR) would confirm the diagnosis.\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ul Hounsfield Units/Scale or CT numbers: \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ulnone - scanner measures attenuation of X-rays which largely depend on the physical density of material that X-rays are passing through. \
+- backprojection process gives values that represent attenuation at a given point in space\
+- these values are calibrated to a range of ~1000 (least dense) to ~3000 (densest) and are typically represented by grayscale values on screen. \
+- bone: 400-1000, soft tissue: 400 to 80, water: 0, fat: -60 to -100, lung: -400 to 600, air: -1000\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ul MR Scanners: \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ulnone - Pulse sequence: the combination of a static field, gradient field, and RF pulse that can be varied with time defines a pulse sequence. Once the induced currents are measured as a result of proton processing and relaxation, the measurements can be represented as values in a physical construct known as k-space. \
+- Once we have k-space data, it undergoes a series of transformations in a reconstructed pipeline, to obtain the final image which represents exact measured signal intensities in the physical space. \
+- MRI: T1, T2-weighted sequences, FLAIR, DWI, DTI, PD are all different pulse sequences\
+- some sequences are with contrast media \
+- unlike CT data, MR values do not correlate with tissue density well; they do not have same consistent meaning\
+- raw data potentially offers lot of opportunities for data scientists. \
+\
+Windowing: linear transformation of a section of original image color space, to convert to grayscale.\
+Multi-planar Reconstruction (MPR): one plane is imaged; the others are reconstructed; usually the non-imaging planes will have lower resolution or will have artifacts. Refers to extraction of non-primary imaging planes from a 3D volume. \
+3D reconstruction: surface mesh vs. volume mesh; constructing a 3D model from multiple slices of 3D medical imaging data. \
+Registration: bringing two different images into the same coordinate space, lining images up together in 3D space; ex: different modalities or different time points. Shift voxels from one image to another image. Rigid registration refers to transformation where only rotation and translation is applied to the entire volume. Affine registration allows scaling and addition to transformation and rotation. Straight lines of moving image remain straight but sizes are not preserved. Deformability registration refers to the process of applying transform to each single point of the moving volume individually. Example deformable registration can be used to map the MRI image on top of the CT image. \
+ \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 Part 3: 3D imaging exploratory data analysis\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 \ul DICOM:\ulnone  Digital Imaging and Communications in Medicine (free and open standard)\
+- used by all scanners and radiological modalities \
+- website: {\field{\*\fldinst{HYPERLINK "https://www.dicomstandard.org/"}}{\fldrslt https://www.dicomstandard.org/}}\
+- Top level: 
+\f1\b Patient 
+\f0\b0 -> 
+\f1\b Study
+\f0\b0  (One imaging session with scanner) -> 
+\f1\b Series
+\f0\b0  (one acquisition sweep within study) -> 
+\f1\b Instance
+\f0\b0  (one image within series: pixel data & metadata or data elements)\
+- DICOM: defines both the standard for how medical imaging data is transmitted through networks and a way to store medical images \
+- DICOM - \'93Digital Imaging and Communications in Medicine\'94. A standard that defines how medical imaging (primarily) data is stored and moved over the network.\
+- Structure: \ul DICOM File\ulnone  = \ul Meta Information + DICOM data set\ulnone  (\ul text-based data elements\ulnone  + \ul pixel data elements\ulnone : frame 1, 2, etc) \
+- a lot of the same data is saved in meta information and dicom data elements \
+- SOP Classes(Service Object Pair): Each have different identifiers to see what image one is looking at\
+- DICOM Data Elements: meta data about the file, key value pairs that hold information about the files. Includes information on Image Type, Creation time, Content Date, Acquisition Date/Time, Study Time, etc. These are not mandatory and may or may not be in the DICOM file. \
+-VR (value representation) column: different abbreviations for type of data (ex: string, etc) \
+- Data Elements: have Study UID, Series UID, Instance UID (unique identifier). Patient ID is not a mandatory element. \
+- DICOM standard rules can be changed for specific reasons, thus need to study each separately. \
+- DICOM standard: will also show the modules or groups of DICOM data elements that are needed or essential for an MR image. Mandatory: M label. \
+- NIFTI: used for imaging competitions or preparing DICOM datasets for machine learning pipelines.\
+\
+\ul Terminology: \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ulnone SOP - Service-Object Pair. DICOM standard defines the concept of an Information Object, which is the representation of a real-world persistent object, such as an MRI image (DICOM Information Objects consist of Information Entities). The standard also defines the concept of Services that could be performed on Information Objects. One such service is the Storage service (we will touch on others later in the course), and a DICOM image stored as a file on a file system is an instance of Storage service performed on an Image Information Object. Such Service-Object Pairs have unique identifiers that help unambiguously define what type of data we are dealing with. A list of SOP Classes can be found in Part 4 of the Standard(opens in a new tab). This list is a useful reference for all possible data types that could be stored per the DICOM standard.\
+\
+Data Element - a DICOM metadata \'93field\'94, which is uniquely identified by a tuple of integer numbers called group id and element id. The convention is to write the element identifier as group id followed by the element id in parentheses like so: (0008,0020) - this one is the DICOM Element for Study Date. DICOM data elements are usually called \'93tags\'94. You can find the list of all possible DICOM tags in Part 6, Chapter 6 of the standard(opens in a new tab).\
+\
+VR - Value Representation. This is the data type of a DICOM data element. DICOM standard imposes some restrictions on what form the data can take. There are short strings, long strings, integers, floats, datetime types, and more. You can find the reference for DICOM data types in Part 5, Section 6 of the standard(opens in a new tab)\
+\
+Data Element Type - identifiers that are used by Information Object Definitions to specify if Data Elements are mandatory, conditional or optional. Data Element Type reference can be found in Part 5, Section 7 of the standard(opens in a new tab)\
+\
+DICOM Information Object - representation of a real-world object (such as an MRI scan) per DICOM standard.\
+\
+IOD - Information Object Definition. Information Object Definition specifies what metadata fields have to be in place for a DICOM Information Object to be valid. Scanner manufacturers follow the relevant parts of the DICOM standard when saving the digital data acquired by the scanner. When parsing DICOM data, it is often useful to reference the relevant IODs to see what data elements could be expected in the particular class of information objects, and what they mean. For example, in Part 3 of the standard, you can find MR Image IOD(opens in a new tab) and CT Image IOD(opens in a new tab) which we will use in this course quite a bit. You might have noticed that the table with all DICOM data elements does not really provide any description of what these elements mean. The reason for that is that elements may mean slightly different things depending on what Information Object Definition uses them, therefore, to find the real meaning of the element you need to look them up in the respective IOD.\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ul NIFTI File Format\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ulnone NIFTI - Neuroimaging Informatics Technology Initiative, is an open standard that is used to store various biomedical data, including 3D images.\ul \
+\ulnone - started for MRI data, then evolved to store any type of biomedical imaging data. \
+- stores entire series in a single file; so do not have multiple files representing a 3D volume\
+- NIFTI is not generated by scanners, unlike DICOM file format\
+- NIFTI will not have all the scanner metadata that DICOM does \
+- widely used in imaging competitions and Machine Learning \
+- does have metadata \
+- also has a website for the standard: {\field{\*\fldinst{HYPERLINK "https://nifti.nimh.nih.gov/nifti-2/"}}{\fldrslt https://nifti.nimh.nih.gov/nifti-2/}}\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ul - orientation information is stored differently from DICOM (different coordinate system)\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ulnone - stores pixels/voxels in a single file filed \
+- NIFTI stores information in variable units of measurement (DICOM only millimeters)\
+\
+\'95 Background and history of the NIFTI: {\field{\*\fldinst{HYPERLINK "https://nifti.nimh.nih.gov/background/"}}{\fldrslt https://nifti.nimh.nih.gov/background/}}\
+\'95 The most "official" reference of NIFTI data fields could be found in this C header file, published on the standard page: {\field{\*\fldinst{HYPERLINK "https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h"}}{\fldrslt https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h}} or on this, slightly better-organized page: {\field{\*\fldinst{HYPERLINK "https://nifti.nimh.nih.gov/nifti1/documentation/nifti1fields"}}{\fldrslt https://nifti.nimh.nih.gov/nifti1/documentation/nifti1fields}}\
+\'95 A great blog post on NIFTI file format: {\field{\*\fldinst{HYPERLINK "https://brainder.org/2012/09/23/the-nifti-file-format/"}}{\fldrslt https://brainder.org/2012/09/23/the-nifti-file-format/}}\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ul Viewer:\ulnone \
+- MicroDicom (Windows OS): free but for windows \
+- 3D Slicer (Windows, Linux and Mac): open-source modular 3D medical image viewer that can be used to view both DICOM and NIFTI. \
+\
+\ul DICOM Parameters: Coordinate System:\ulnone \
+- patient coordinate system\
+- scanner coordinate system \
+- DICOM has orientation of image relative to patient: \ul Image Position Patient (IOP)\ulnone : position of top-left corner, in patient coordinates, \ul Image Orientation Patient (IPP)\ulnone : orientation of image\
+- load image into 3D Slicer: orientation should be what is expected when processing dataset\
+- Pixel Spacing: x and y dimension size (can be different)\
+- Slice Thickness: z dimension (may not be available in DICOM)\
+NIFTI Parameters:\
+- pixdim field, xyzt_units is for units of measurements \
+\
+Orientation parameters\
+For DICOM two parameters that define the relative position of a 2D in the 3D space would be:\
+(0020,0037) Image Orientation Patient - a parameter that stores two vectors (directional cosines to be precise) that define the orientation of the first row and first column of the image.\
+(0020,0032) Image Position Patient - a parameter that stores x, y, and z coordinates of the upper left-hand corner of the image.\
+Both of these are Type 1 (mandatory) parameters for MR and CT IODs, so it is generally safe to rely on them.\
+\
+For NIFTI, the same purpose is served by srow_*, qoffset_* vectors.\
+\
+Physical spacing parameters\
+(0028,0030) Pixel Spacing - two values that store the physical distance between centers of pixels across x and y axes.\
+(0018,0050) Slice Thickness - thickness of a single slice. Note that this one is a Type 2 (required, but can be zero) parameter for CT and MR data. If you find those unavailable, you can deduce slice thickness from IPP parameters. This can happen if your volume has non-uniform slice thickness.\
+\
+Photometric parameters\
+There are quite a few of those, as DICOM can store both grayscale and color data, so lots of parameters deal with color palettes. CT and MR images usually have monochrome pixel representation (defined by tag (0028,0004) Photometric Interpretation).\
+Most notable ones of this group are:\
+(0028,0100) Bits Allocated - parameter that defines the number of bits allocated per pixel (since we have CPUs that operate in bytes, this parameter is always a multiple of 8).\
+(0028,0101) Bits Stored - parameter that defines the number of bits that are actually used - quite often, you could see Bits Allocated set to 16, but Bits Stored set to 12.\
+Image size parameters\
+Of worthy mention are parameters that define the size of the 3D volume. There are Type 1 parameters that define the width and height of each 2D slice:\
+(0020,0010) Rows - this is the height of the slice, in voxels\
+(0020,0011) Columns - width of the slice, in voxels\
+Both of these need to be consistent across all DICOM files that comprise a series.\
+Note that there isn't really anything in DICOM metadata that has to tell you how many slices you have in the series. There are tags that can hint at this (like (0054,0081) Number of Slices, or (0020,0013) Instance Number), but none of them are mandatory, Type 1 tags for CT or MR data. The most reliable way to determine the number of slices in the DICOM series is to look at the number of files that you have, and ideally validate that they make up a correct volume by checking for the consistency of IPP values.\
+\
+Further Resources\
+If you want to dive deeper into the subjects of coordinate spaces for medical images, and parameters of DICOM files in general, some useful resources:\
+\'95 Section on IPP and IOP parameters in the DICOM standard: {\field{\*\fldinst{HYPERLINK "http://dicom.nema.org/medical/dicom/2020a/output/chtml/part%2003/sect%20C.7.6.2.html"}}{\fldrslt http://dicom.nema.org/medical/dicom/2020a/output/chtml/part 03/sect C.7.6.2.html}}\
+\'95 A solid explanation of how coordinate systems work in NIFTI: {\field{\*\fldinst{HYPERLINK "https://nipy.org/nibabel/coordinate%20systems.html"}}{\fldrslt https://nipy.org/nibabel/coordinate systems.html}}\
+\'95 A company called Innolitics (a vendor of various DICOM software) maintains a great reference of the DICOM standard which sometimes could be quite a bit more convenient than the official standard: {\field{\*\fldinst{HYPERLINK "https://dicom.innolitics.com/ciods"}}{\fldrslt https://dicom.innolitics.com/ciods}}\
+\
+Voxel spacing\
+DICOM voxels do not have to be perfect cubes (as they are in many computer vision problems). There are DICOM Data Elements that will tell you what exactly are the dimensions of voxels. The most important ones are Pixel Spacing and Slice Thickness. However, there are others, and if your project involves measuring things, make sure you get the transformation right by closely inspecting the tags in your dataset and comparing them with the list of elements in the IOD table for the respective modality.\
+\
+Data ranges\
+We have seen how with CT, you may have data in your dataset that will represent synthetic material or items artificially added by scanners. It is always a good idea to see if there is something outstanding in the image you are dealing with and if it represents something that you need to think about in your downstream processing.\
+\
+Conversions between DICOM values and screen space are particularly important if you are planning to visualize slices for any kind of diagnostic use or overlay them on top of diagnostic information. We have not really touched the aspects of visualization other than being mindful of bit depth and doing our own windowing, but DICOM images contain quite a lot of information that defines how exactly you are expected to map the data to the screen colorspace. If you are interested in exploring this further or need to accurately represent the data, take a closer look at elements in DICOM's ImagePixel module. Things like Pixel Representation, Photometric Interpretation, Rescale Slope, Rescale Intercept and many others define how values should be transformed for accurate representation.\
+\
+Methods for dataset analysis basically boil down to using the same tricks as you\'92d do for individual volume analysis and being on the lookout for inconsistencies in data.\
+\
+Inconsistencies usually boil down to two classes:\
+\
+Clinical anomalies - the things related to either anatomical anomalies like missing organs, pathologies like tumors or implants such as limb prosthesis, ports/cannulas, surgical implants, presence of contrast media, etc. Sometimes these things can result in artifacts in the images, so it\'92s good to be aware of them\
+\
+Informatics anomalies - things related to specifics of data acquisition or variations in DICOM encoding coming from different scanners. These would be things like slice spacing consistency, image dimensions, variations in photometric encoding, etc\
+\
+Basic knowledge of DICOM and intuition for what things could go wrong are always useful when analyzing the datasets. I will post some examples of great dataset EDA at the end of this lesson as well.\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 Part 4: 3D Medical Imaging: Deep Learning Applications: \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 \'95 Use cases for\ul  3D medical image classification and object detection\ulnone  \
+\'95 Distinguish between \ul 2D and 2.5D methods for 3D volume classification\ulnone  \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \'95 Identify the use cases for \ul segmentation \ulnone \
+\'95 Apply the \ul U-Net algorithm to train a machine learning model for segmentation\ulnone  \
+\'95 Understand \ul Ground Truth for Segmentation Understand common segmentation metrics: Dice, HD\ulnone \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 Classification Use Cases: where AI can be applied \
+- Acute/Emergent Diagnosis (algo at point of image acquisition for list prioritization, or resource-limited areas)\
+- Screening: automated detection for screening as these are labor intensive \
+- Incidental Findings: ex: incidentalomas (ex: cysts) \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b0 \cf0 Point of View: \'93when choosing a medical imaging problem to be solved by machine learning, it is tempting to assume that automated detection of certain conditions would be the most valuable thing to solve. However, this is not usually the case. Quite often detecting if a condition is present is not so difficult for a human observer who is already looking for such a condition. Things that bring most value usually lie in the area of productivity increase. Helping prioritize the more important exams, helping focus the attention of a human reader on small things or speed up tedious tasks usually is much more valuable. Therefore it is important to understand the clinical use case that the algorithm will be used well and think of end-user value first.\'94\
+\
+2D vs. 2.5D vs. 3D Convolution: \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \ul 2D Convolution\ulnone  is an operation visualized in the image above, where a convolutional filter is applied to a single 2D image. Applying a 2D convolution approach to a 3D medical image would mean applying it to every single slice of the image. A neural network can be constructed to either process slices one at a time, or to stack such convolutions into a stack of 2D feature maps. Such an approach is fastest of all and uses least memory, but fails to use any information about the topology of the image in the 3rd dimension.\
+\
+\ul 2.5D Convolution\ulnone  is an approach where 2D convolutions are applied independently to areas around each voxel (either in neighboring planes or in orthogonal planes) and their results are summed up to form a 2D feature map. Such an approach leverages some 3-dimensional information.\
+\
+\ul 3D Convolution \ulnone is an approach where the convolutional kernel is 3 dimensional and thus combines information from all 3 dimensions into the feature map. This approach leverages the 3-dimensional nature of the image, but uses the most memory and compute resources.\
+\
+Understanding these is essential to being able to put together efficient deep neural networks where convolutions together with downsampling are used to extract higher-order semantic features from the image.\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f1\b \cf0 \
+}
